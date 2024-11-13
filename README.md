@@ -1,40 +1,197 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Devcon Frogs
 
-## Getting Started
+Frog collection <3
 
-First, run the development server:
+## How to update the collection
+The collection can be updated by sending a curl or using the script below to scrape telegram...
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Before running the script use devtools to fine the chat scoll container, right click and set global variable
+2. Scroll up through telegram to have the messages loaded
+3. Paste the below into the dev console
+
+```js
+(async () => {
+    const collectedUUIDs = new Set();
+    let previousScrollTop = temp1.scrollTop;
+
+    // Check if the scroll container exists
+    if (!temp1) {
+        console.error("Scroll container not found");
+        return;
+    }
+
+    // Function to follow redirects and get final URL
+    const getFinalUrl = async (url) => {
+        try {
+            const response = await fetch(url, {
+                method: 'HEAD',
+                redirect: 'follow',
+                // Adding headers to avoid some CORS issues
+                headers: {
+                    'Accept': '*/*',
+                    'User-Agent': 'Mozilla/5.0'
+                }
+            });
+            return response.url;
+        } catch (error) {
+            console.error('Error following redirect for URL:', url, error);
+            return url;
+        }
+    };
+
+    // Function to extract UUID from URL
+    const extractUUID = (url) => {
+        try {
+            const urlObj = new URL(url);
+            const qrParam = urlObj.searchParams.get('necklace_qr');
+            if (qrParam && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(qrParam)) {
+                collectedUUIDs.add(qrParam);
+                console.log('Found UUID:', qrParam, 'from URL:', url);
+            }
+        } catch (error) {
+            console.error('Error parsing URL:', url, error);
+        }
+    };
+
+    // Helper function to collect and process links from the page
+    async function collectAndProcessLinks() {
+        const links = document.querySelectorAll('a');
+        const processPromises = [];
+
+        for (const link of links) {
+            const url = link.href;
+            if (url.includes("necklace") || url.includes("frogcrypto")) {
+                processPromises.push((async () => {
+                    try {
+                        const finalUrl = await getFinalUrl(url);
+                        extractUUID(finalUrl);
+                    } catch (error) {
+                        console.error('Error processing URL:', url, error);
+                    }
+                })());
+            }
+        }
+
+        // Wait for all URLs to be processed before continuing
+        await Promise.allSettled(processPromises);
+    }
+
+    // Progress indicator
+    let scrollCount = 0;
+    console.log('Starting scan...');
+
+    // Scroll and collect links until reaching the end
+    while (true) {
+        await collectAndProcessLinks();
+        scrollCount++;
+        console.log(`Completed scroll ${scrollCount}, found ${collectedUUIDs.size} unique UUIDs so far`);
+
+        // Scroll up by a large amount to load older messages
+        temp1.scrollTop -= temp1.clientHeight;
+
+        // Check if we reached the end (no more content loaded)
+        if (temp1.scrollTop === previousScrollTop) {
+            console.log('Reached the top of the chat');
+            break;
+        }
+        previousScrollTop = temp1.scrollTop;
+    }
+
+    // Print final results
+    console.log('Scan complete!');
+    console.log('Found UUIDs:', [...collectedUUIDs]);
+    console.log('Total unique UUIDs:', collectedUUIDs.size);
+
+    return [...collectedUUIDs];
+})();
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How to use the collection
+Simply run the follwing, all it needs is pupeteer and a chrome instance logged into zupass
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+1. Login to Zupass
+2. Create a next.js project with `pupeteer`
+3. Update the constants
+4. Run the script
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+```js
+const batchSize = 10; // Number of URLs to open at once
+const username = "harryet"; // Update with your username
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+// Script Below:
+const puppeteer = require("puppeteer");
+const axios = require("axios");
+const fs = require("fs");
+(async () => {
+  let urls;
+  if (fs.existsSync("frogs.json")) {
+    console.warn(
+      "Using cached frogs, please only change this if it has updated. This uses bandwidth!",
+    );
+    urls = JSON.parse(fs.readFileSync("frogs.json"));
+  } else {
+    try {
+      const response = await axios.get("https://frogs.harryet.xyz/api/frogs");
+      urls = response.data;
+      fs.writeFileSync("frogs.json", JSON.stringify(urls));
+    } catch (error) {
+      console.log(`Error fetching frogs: ${error.message}`);
+      return;
+    }
+  }
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+  // Launch puppeteer with existing Chrome profile
+  const browser = await puppeteer.launch({
+    headless: false, // Set to false to view the actions
+    executablePath:
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    args: [
+      `--user-data-dir=/Users/${username}/Library/Application Support/Google/Chrome`, // Update with your Chrome profile path
+    ],
+  });
 
-## Learn More
+  // Helper function to process a single URL
+  async function processURL(page, url) {
+    try {
+      await page.goto(url, { waitUntil: "load" });
 
-To learn more about Next.js, take a look at the following resources:
+      // Wait for the iframe to load and then access it
+      const iframe = await page.waitForSelector("iframe", { timeout: 10000 });
+      const frame = await iframe.contentFrame();
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+      // Wait for the button inside the iframe and click it
+      if (frame) {
+        await frame.waitForSelector("button.w-48.bg-green-500", {
+          timeout: 10000,
+        });
+        await frame.click("button.w-48.bg-green-500");
+        console.log(`Button clicked for URL: ${url}`);
+      } else {
+        console.log(`Iframe not found for URL: ${url}`);
+      }
+    } catch (error) {
+      console.log(`Error processing URL ${url}: ${error.message}`);
+    }
+  }
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+  // Process URLs in batches
+  for (let i = 0; i < urls.length; i += batchSize) {
+    const batch = urls.slice(i, i + batchSize);
 
-## Deploy on Vercel
+    // Open a new page for each URL in the batch
+    const pagePromises = batch.map(async (url) => {
+      const page = await browser.newPage();
+      await processURL(page, `https://dc7.getfrogs.xyz/necklace/${url}`);
+      await page.close();
+    });
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+    // Wait for all pages in the batch to complete
+    await Promise.all(pagePromises);
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+    // Add a small delay between batches
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+
+  await browser.close();
+})();
+```
