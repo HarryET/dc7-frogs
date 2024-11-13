@@ -11,6 +11,8 @@ The collection can be updated by sending a curl or using the script below to scr
 
 ```js
 (async () => {
+    const CAN_CONTRIBUTE = true; // change to false if you dont want to update the frog list!
+
     const collectedUUIDs = new Set();
     let previousScrollTop = temp1.scrollTop;
 
@@ -26,7 +28,6 @@ The collection can be updated by sending a curl or using the script below to scr
             const response = await fetch(url, {
                 method: 'HEAD',
                 redirect: 'follow',
-                // Adding headers to avoid some CORS issues
                 headers: {
                     'Accept': '*/*',
                     'User-Agent': 'Mozilla/5.0'
@@ -102,8 +103,30 @@ The collection can be updated by sending a curl or using the script below to scr
     console.log('Found UUIDs:', [...collectedUUIDs]);
     console.log('Total unique UUIDs:', collectedUUIDs.size);
 
-    return [...collectedUUIDs];
+    // Send the collected UUIDs to the server
+    if (CAN_CONTRIBUTE) {
+      try {
+          const response = await fetch("https://frogs.harryet.xyz/api/contribute", {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  uuid: [...collectedUUIDs]
+              })
+          });
+
+          if (response.ok) {
+              console.log('Successfully sent UUIDs to server.');
+          } else {
+              console.error('Failed to send UUIDs. Status:', response.status);
+          }
+      } catch (error) {
+          console.error('Error sending data to server:', error);
+      }
+    }
 })();
+
 ```
 
 ## How to use the collection

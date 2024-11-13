@@ -39,13 +39,14 @@ export default async function handler(
     }
   }
 
-  await superSupabase.from("uuid_records").insert(
+  await superSupabase.from("uuid_records").upsert(
     body.uuid.map((uuid) => ({
       uuid,
       source: "SUBMITTED",
       added_at: new Date().toISOString(),
       contributed_by: "anon",
     })),
+    { onConflict: "uuid" },
   );
 
   return new Response(
