@@ -48,11 +48,19 @@ export default async function handler(
     })),
   );
 
-  res.status(201).json({
-    message:
-      "Thanks for the new Frogs, they should be on the website soon :eyes:",
-    emoji: emojis[Math.floor(Math.random() * emojis.length)],
-  });
+  return new Response(
+    JSON.stringify({
+      message:
+        "Thanks for the new Frogs, they should be on the website soon :eyes:",
+      emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
 }
 
 export const runtime = "edge";

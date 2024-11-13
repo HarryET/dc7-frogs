@@ -23,7 +23,12 @@ export default async function handler(
     >("uuid_records")
     .select("*");
 
-  res.status(200).json(data);
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 }
 
 export const runtime = "edge";
