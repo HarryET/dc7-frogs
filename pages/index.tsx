@@ -22,6 +22,7 @@ const Home = () => {
       >("uuid_records")
       .select("*");
 
+    // @ts-ignore
     setData(data);
   })();
 
@@ -63,27 +64,35 @@ const Home = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.map((item) => (
-                  <tr key={item.uuid} className="hover:bg-gray-100">
-                    <td className="border-b border-gray-300 px-4 py-2">
-                      {item.uuid}
-                    </td>
-                    <td className="border-b border-gray-300 px-4 py-2">
-                      <a
-                        href={`https://dc7.getfrogs.xyz/necklace/${item.uuid}`}
-                        className="bg-green-500 text-white px-4 py-2 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 mr-2"
-                      >
-                        To Zupass
-                      </a>
-                      {/* <a
+                {data.map((item) => {
+                  // @ts-ignore
+                  let url = `https://dc7.getfrogs.xyz/necklace/${item.uuid}`;
+                  return (
+                    <>
+                      {/* @ts-ignore */}
+                      <tr key={item.uuid} className="hover:bg-gray-100">
+                        <td className="border-b border-gray-300 px-4 py-2">
+                          {/* @ts-ignore */}
+                          {item.uuid}
+                        </td>
+                        <td className="border-b border-gray-300 px-4 py-2">
+                          <a
+                            href={url}
+                            className="bg-green-500 text-white px-4 py-2 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 mr-2"
+                          >
+                            To Zupass
+                          </a>
+                          {/* <a
                         href={`/report/${item.uuid}`}
                         className="bg-red-500 text-white px-4 py-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
                       >
                         Report
                       </a> */}
-                    </td>
-                  </tr>
-                ))}
+                        </td>
+                      </tr>
+                    </>
+                  );
+                })}
               </tbody>
             </table>
           </div>
