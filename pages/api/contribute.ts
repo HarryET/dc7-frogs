@@ -54,3 +54,5 @@ export default async function handler(
     emoji: emojis[Math.floor(Math.random() * emojis.length)],
   });
 }
+
+export const runtime = "edge";
