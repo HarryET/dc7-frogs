@@ -31,6 +31,24 @@ const Home = () => {
         <header>
           <h1 className="text-4xl font-mono">Devcon 7 Frog Frens</h1>
         </header>
+        <div className="flex flex-row gap-6">
+          <p>Project from Harry</p>
+          <a
+            href="https://x.com/theharryet"
+            className="hover:text-blue-600 hover:underline"
+          >
+            Twitter
+          </a>
+          <a
+            href="https://github.com/harryet/dc7-frogs"
+            className="hover:text-blue-600 hover:underline"
+          >
+            Github
+          </a>
+        </div>
+        <div>
+          <p>🐸 {data.length} potential frens</p>
+        </div>
         <div>
           <div className="overflow-x-auto">
             <table className="min-w-full table-auto border-collapse">
@@ -70,21 +88,6 @@ const Home = () => {
             </table>
           </div>
         </div>
-        <footer className="flex flex-row gap-6">
-          <p>Project from Harry</p>
-          <a
-            href="https://x.com/theharryet"
-            className="hover:text-blue-600 hover:underline"
-          >
-            Twitter
-          </a>
-          <a
-            href="https://github.com/harryet"
-            className="hover:text-blue-600 hover:underline"
-          >
-            Github
-          </a>
-        </footer>
       </div>
     </div>
   );
